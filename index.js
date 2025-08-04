@@ -765,6 +765,11 @@ app.post('/config/fields', (req, res) => {
   }
 });
 
+// Маршрут для конфигуратора полей
+app.get('/field-configurator', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src', 'field-configurator.html'));
+});
+
 // Подключаем статические файлы ПОСЛЕ API маршрутов
 app.use(express.static('public'));
 

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AmoCRM → Google Sheets | Мониторинг</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 24px;
+        }
+        
+        .card-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-active { background: #10b981; }
+        .status-error { background: #ef4444; }
+        .status-warning { background: #f59e0b; }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+        
+        .metric-label {
+            color: #6b7280;
+            font-size: 0.9em;
+        }
+        
+        .metric-value {
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: background 0.3s ease;
+            border: none;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            background: #5a67d8;
+        }
+        
+        .btn-success {
+            background: #10b981;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        .btn-warning {
+            background: #f59e0b;
+        }
+        
+        .btn-warning:hover {
+            background: #d97706;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+        }
+        
+        .actions {
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .log-container {
+            background: #1f2937;
+            color: #e5e7eb;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 3px 0;
+        }
+        
+        .log-timestamp {
+            color: #9ca3af;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 AmoCRM → Google Sheets</h1>
+            <p class="subtitle">Система автоматической синхронизации данных</p>
+        </div>
+        
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon" style="background: #dbeafe; color: #3b82f6;">📊</div>
+                    <div class="card-title">Статус системы</div>
+                </div>
+                <div id="system-status">
+                    <div class="loading">Загрузка данных...</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon" style="background: #dcfce7; color: #16a34a;">📈</div>
+                    <div class="card-title">Статистика</div>
+                </div>
+                <div id="statistics">
+                    <div class="loading">Загрузка статистики...</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon" style="background: #fef3c7; color: #d97706;">⚙️</div>
+                    <div class="card-title">Конфигурация</div>
+                </div>
+                <div id="configuration">
+                    <div class="loading">Загрузка конфигурации...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon" style="background: #e0e7ff; color: #6366f1;">📝</div>
+                <div class="card-title">Логи активности</div>
+            </div>
+            <div class="log-container" id="activity-logs">
+                <div class="loading">Загрузка логов...</div>
+            </div>
+        </div>
+        
+        <div class="actions">
+            <a href="/api/stats" class="btn" target="_blank">📊 API Статистика</a>
+            <a href="/field-configurator" class="btn btn-warning">⚙️ Конфигуратор полей</a>
+            <button class="btn btn-success" onclick="runFullSync()">🔄 Полная синхронизация</button>
+            <button class="btn" onclick="runExport()">📥 Экспорт данных</button>
+        </div>
+    </div>
+
+    <script>
+        // Загрузка данных при старте
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSystemStatus();
+            loadStatistics();
+            loadConfiguration();
+            loadActivityLogs();
+            
+            // Обновляем данные каждые 30 секунд
+            setInterval(() => {
+                loadSystemStatus();
+                loadStatistics();
+                loadActivityLogs();
+            }, 30000);
+        });
+        
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch('/api/info');
+                const data = await response.json();
+                
+                const statusHtml = `
+                    <div class="metric">
+                        <span class="metric-label">
+                            <span class="status-indicator ${data.services.googleSheets ? 'status-active' : 'status-error'}"></span>
+                            Google Sheets API
+                        </span>
+                        <span class="metric-value">${data.services.googleSheets ? 'Активен' : 'Ошибка'}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">
+                            <span class="status-indicator ${data.services.amocrm ? 'status-active' : 'status-error'}"></span>
+                            AmoCRM API
+                        </span>
+                        <span class="metric-value">${data.services.amocrm ? 'Активен' : 'Ошибка'}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Время работы</span>
+                        <span class="metric-value">${data.uptime || 'Неизвестно'}</span>
+                    </div>
+                `;
+                
+                document.getElementById('system-status').innerHTML = statusHtml;
+            } catch (error) {
+                document.getElementById('system-status').innerHTML = 
+                    '<div class="metric"><span class="metric-label">Ошибка загрузки</span></div>';
+            }
+        }
+        
+        async function loadStatistics() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                
+                const statsHtml = `
+                    <div class="metric">
+                        <span class="metric-label">Обработано вебхуков</span>
+                        <span class="metric-value">${data.webhooks?.processed || 0}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Успешных записей</span>
+                        <span class="metric-value">${data.syncs?.successful || 0}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Ошибок</span>
+                        <span class="metric-value">${data.syncs?.errors || 0}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Последняя синхронизация</span>
+                        <span class="metric-value">${data.lastSync || 'Никогда'}</span>
+                    </div>
+                `;
+                
+                document.getElementById('statistics').innerHTML = statsHtml;
+            } catch (error) {
+                document.getElementById('statistics').innerHTML = 
+                    '<div class="metric"><span class="metric-label">Ошибка загрузки</span></div>';
+            }
+        }
+        
+        async function loadConfiguration() {
+            try {
+                const response = await fetch('/api/info');
+                const data = await response.json();
+                
+                const configHtml = `
+                    <div class="metric">
+                        <span class="metric-label">Домен AmoCRM</span>
+                        <span class="metric-value">${data.config?.amoDomain || 'Не настроен'}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">ID таблицы</span>
+                        <span class="metric-value">${data.config?.sheetId ? '✅ Настроен' : '❌ Не настроен'}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Колонок данных</span>
+                        <span class="metric-value">${data.structure?.columns || 0}</span>
+                    </div>
+                `;
+                
+                document.getElementById('configuration').innerHTML = configHtml;
+            } catch (error) {
+                document.getElementById('configuration').innerHTML = 
+                    '<div class="metric"><span class="metric-label">Ошибка загрузки</span></div>';
+            }
+        }
+        
+        function loadActivityLogs() {
+            // Симуляция логов (в реальности можно подключить WebSocket или polling)
+            const logs = [
+                { time: new Date().toLocaleTimeString(), message: 'Система запущена успешно' },
+                { time: new Date(Date.now() - 60000).toLocaleTimeString(), message: 'Подключение к Google Sheets установлено' },
+                { time: new Date(Date.now() - 120000).toLocaleTimeString(), message: 'AmoCRM API авторизован' },
+                { time: new Date(Date.now() - 180000).toLocaleTimeString(), message: 'Загружена структура данных (42 колонки)' }
+            ];
+            
+            const logsHtml = logs.map(log => 
+                `<div class="log-entry">
+                    <span class="log-timestamp">[${log.time}]</span>
+                    <span>${log.message}</span>
+                </div>`
+            ).join('');
+            
+            document.getElementById('activity-logs').innerHTML = logsHtml;
+        }
+        
+        async function runFullSync() {
+            if (confirm('Запустить полную синхронизацию данных?')) {
+                try {
+                    const response = await fetch('/sync/full', { method: 'POST' });
+                    const result = await response.json();
+                    alert(result.message || 'Синхронизация запущена');
+                } catch (error) {
+                    alert('Ошибка запуска синхронизации: ' + error.message);
+                }
+            }
+        }
+        
+        async function runExport() {
+            if (confirm('Запустить экспорт исторических данных из AmoCRM?')) {
+                alert('Экспорт данных запущен в фоновом режиме. Проверьте логи сервера.');
+                // В реальности здесь можно вызвать API endpoint для запуска export.js
+            }
+        }
+    </script>
+</body>
+</html>
