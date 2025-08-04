@@ -416,6 +416,145 @@ app.post('/clear-non-evg-deals', async (req, res) => {
   }
 });
 
+// НОВЫЙ ЭНДПОИНТ: Экспорт данных с фильтрами из скриншота
+app.post('/export/data', async (req, res) => {
+  console.log('📊 ЗАПУСК ЭКСПОРТА ДАННЫХ: Бар = "ЕВГ СПБ", Все этапы, За все время');
+  
+  // Быстро отвечаем клиенту
+  res.status(200).json({
+    status: 'started',
+    message: 'Экспорт данных запущен с фильтрами: ЕВГ СПБ + Все этапы + За все время'
+  });
+  
+  try {
+    if (!amoCRM) {
+      console.error('❌ AmoCRM API не инициализирован');
+      return;
+    }
+
+    console.log('🎯 НАСТРОЙКИ ЭКСПОРТА (как на скриншоте):');
+    console.log('   📍 Бар (deal): ЕВГ СПБ');
+    console.log('   📍 Все этапы: ✅ ВСЕ включены');
+    console.log('   📍 За все время: с 01.01.2020');
+    
+    // Дата "за все время" - максимально ранняя
+    const startDate = new Date('2020-01-01');
+    startDate.setHours(0, 0, 0, 0);
+    const startTimestamp = Math.floor(startDate.getTime() / 1000);
+    
+    let totalProcessed = 0;
+    let evgDealsFound = 0;
+    let totalPages = 0;
+    const maxPagesLimit = 1000; // Безопасный лимит
+    
+    console.log(`📅 Начинаем экспорт с ${startDate.toLocaleDateString('ru-RU')}`);
+    
+    // Получаем кастомные поля для определения ID поля "Бар"
+    console.log('📋 Получаем метаданные полей...');
+    const fieldsResponse = await amoCRM.getCustomFields();
+    
+    let barFieldId = null;
+    if (fieldsResponse._embedded && fieldsResponse._embedded.custom_fields) {
+      const barField = fieldsResponse._embedded.custom_fields.find(field => 
+        field.name && (
+          field.name.includes('Бар') || 
+          field.name.includes('бар') ||
+          field.name.toLowerCase().includes('bar')
+        )
+      );
+      
+      if (barField) {
+        barFieldId = barField.id;
+        console.log(`🎯 Найдено поле "Бар": ID=${barField.id}, Name="${barField.name}"`);
+      }
+    }
+    
+    // Загружаем все сделки постранично
+    for (let page = 1; page <= maxPagesLimit; page++) {
+      console.log(`\n📄 Обрабатываем страницу ${page}...`);
+      
+      try {
+        const dealsResponse = await amoCRM.getAllDeals(page, 250);
+        
+        if (!dealsResponse._embedded || !dealsResponse._embedded.leads) {
+          console.log('📭 Больше сделок нет, завершаем');
+          break;
+        }
+        
+        const deals = dealsResponse._embedded.leads;
+        totalPages = page;
+        totalProcessed += deals.length;
+        
+        console.log(`   📦 Получено сделок: ${deals.length}`);
+        
+        // Фильтруем и обрабатываем сделки
+        let pageEvgCount = 0;
+        
+        for (const deal of deals) {
+          // Проверяем, содержит ли сделка "ЕВГ СПБ"
+          let isEvgDeal = false;
+          
+          if (deal.custom_fields_values && barFieldId) {
+            const barField = deal.custom_fields_values.find(f => f.field_id === barFieldId);
+            if (barField && barField.values && barField.values[0]) {
+              const value = barField.values[0].value;
+              if (value && value.includes('ЕВГ СПБ')) {
+                isEvgDeal = true;
+              }
+            }
+          }
+          
+          if (isEvgDeal) {
+            evgDealsFound++;
+            pageEvgCount++;
+            
+            // Используем синхронизатор для добавления в таблицу
+            if (synchronizer) {
+              try {
+                await synchronizer.processDeal(deal.id, deal);
+                console.log(`   ✅ Экспортирована сделка ${deal.id}: "${deal.name}"`);
+              } catch (dealError) {
+                console.error(`   ❌ Ошибка экспорта сделки ${deal.id}:`, dealError.message);
+              }
+            }
+          }
+        }
+        
+        console.log(`   📊 На странице: всего=${deals.length}, ЕВГ СПБ=${pageEvgCount}, итого ЕВГ=${evgDealsFound}`);
+        
+        // Если меньше 250 сделок, это последняя страница
+        if (deals.length < 250) {
+          console.log('📄 Достигнута последняя страница');
+          break;
+        }
+        
+        // Небольшая пауза между запросами
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+      } catch (pageError) {
+        console.error(`❌ Ошибка на странице ${page}:`, pageError.message);
+        break;
+      }
+    }
+    
+    console.log('\n🎉 ЭКСПОРТ ЗАВЕРШЕН!');
+    console.log('=' .repeat(60));
+    console.log(`📊 СТАТИСТИКА ЭКСПОРТА:`);
+    console.log(`   📄 Обработано страниц: ${totalPages}`);
+    console.log(`   📦 Всего сделок просмотрено: ${totalProcessed}`);
+    console.log(`   🎯 Найдено "ЕВГ СПБ" сделок: ${evgDealsFound}`);
+    console.log(`   📅 Период: ЗА ВСЕ ВРЕМЯ (с ${startDate.toLocaleDateString('ru-RU')})`);
+    console.log(`   ⚙️ Фильтры: Бар="ЕВГ СПБ" + Все этапы`);
+    console.log('=' .repeat(60));
+    
+    statistics.lastFullSync = new Date();
+    
+  } catch (error) {
+    console.error('❌ Критическая ошибка экспорта:', error.message);
+    console.error('📝 Стек ошибки:', error.stack);
+  }
+});
+
 // НОВЫЙ ЭНДПОИНТ: Диагностика поиска ЕВГ СПБ сделок
 app.post('/diagnose/evg-deals', async (req, res) => {
   console.log('🔍 Запуск диагностики поиска ЕВГ СПБ сделок...');

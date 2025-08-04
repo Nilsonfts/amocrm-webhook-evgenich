@@ -830,20 +830,6 @@
         <section class="actions-section">
             <h2 class="section-title">Управление системой</h2>
             <div class="actions-grid">
-                <button class="action-tile primary" id="export-data-btn">
-                    <div class="tile-icon">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="7,10 12,15 17,10"/>
-                            <line x1="12" y1="15" x2="12" y2="3"/>
-                        </svg>
-                    </div>
-                    <div class="tile-content">
-                        <h3>🎯 ЭКСПОРТ ДАННЫХ</h3>
-                        <p>ЕВГ СПБ • Все этапы • За все время</p>
-                    </div>
-                </button>
-
                 <button class="action-tile primary" id="full-sync-btn">
                     <div class="tile-icon">
                         <svg viewBox="0 0 24 24">
@@ -1216,20 +1202,6 @@
             document.getElementById('refresh-btn').addEventListener('click', () => {
                 addLogEntry('info', 'REFRESH', 'Manual refresh initiated');
                 loadSystemData();
-            });
-
-            // 🎯 ЭКСПОРТ ДАННЫХ с фильтрами из скриншота
-            document.getElementById('export-data-btn').addEventListener('click', async () => {
-                addLogEntry('info', 'EXPORT', '🎯 Запуск экспорта: ЕВГ СПБ + Все этапы + За все время');
-                addLogEntry('info', 'EXPORT', '📊 Фильтры: Бар="ЕВГ СПБ", Все этапы включены, Период с 01.01.2020');
-                try {
-                    const response = await fetch('/export/data', { method: 'POST' });
-                    const result = await response.json();
-                    addLogEntry('success', 'EXPORT', `✅ Экспорт запущен: ${result.message}`);
-                    addLogEntry('info', 'EXPORT', '📈 Следите за логами - система начнет выгрузку всех сделок ЕВГ СПБ');
-                } catch (error) {
-                    addLogEntry('error', 'EXPORT', `❌ Ошибка экспорта: ${error.message}`);
-                }
             });
 
             // Массовая выгрузка
