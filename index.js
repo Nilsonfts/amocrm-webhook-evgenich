@@ -722,43 +722,59 @@ app.get('/api/env-check', (req, res) => {
 // Эндпоинт для получения конфигурации полей
 app.get('/config/fields', async (req, res) => {
   try {
+    // Проверяем, существует ли файл конфигурации
+    if (!fs.existsSync(fieldsConfigPath)) {
+      // Если файла нет, возвращаем структуру из column-structure.js
+      res.json(COLUMN_STRUCTURE);
+      return;
+    }
+
     // Читаем файл конфигурации
     const config = JSON.parse(fs.readFileSync(fieldsConfigPath, 'utf-8'));
-
-    // Получаем метаданные полей из AmoCRM
-    const metadata = await amoCRM.getFieldsMetadata();
-
-    res.json({
-      metadata,
-      selectedFields: config.selectedFields
-    });
+    
+    // Если это старый формат с selectedFields, преобразуем в новый
+    if (config.selectedFields) {
+      const newConfig = {};
+      config.selectedFields.forEach(field => {
+        newConfig[field.name] = field.columnName || field.name;
+      });
+      res.json(newConfig);
+    } else {
+      // Новый формат - просто возвращаем как есть
+      res.json(config);
+    }
+    
   } catch (error) {
     console.error('Ошибка при получении конфигурации полей:', error.message);
-    res.status(500).json({ error: 'Не удалось получить конфигурацию полей' });
+    // В случае ошибки возвращаем стандартную структуру
+    res.json(COLUMN_STRUCTURE);
   }
 });
 
 // Эндпоинт для сохранения конфигурации полей
 app.post('/config/fields', (req, res) => {
   try {
-    const { selectedFields } = req.body;
+    const fieldsConfig = req.body;
 
-    // Сохраняем выбранные поля в JSON-файл
-    fs.writeFileSync(fieldsConfigPath, JSON.stringify({ selectedFields }, null, 2));
-    
-    // Для Railway: сохраняем в переменной окружения, если это возможно
-    if (process.env.RAILWAY_SERVICE_ID) {
-      try {
-        // Railway позволяет сохранять переменные окружения через Railway CLI
-        // Но это требует наличия CLI и авторизации
-        // В качестве альтернативы, можно использовать Railway API если есть токен
-        console.log('✅ Конфигурация полей сохранена для Railway. Сохраните fieldsConfigPath как постоянный том.');
-      } catch (railwayError) {
-        console.warn('⚠️ Не удалось сохранить конфигурацию для Railway:', railwayError.message);
-      }
+    // Валидация: проверяем, что это объект с полями
+    if (!fieldsConfig || typeof fieldsConfig !== 'object') {
+      return res.status(400).json({ error: 'Некорректный формат конфигурации полей' });
     }
 
-    res.status(200).json({ message: 'Конфигурация полей успешно сохранена' });
+    // Сохраняем конфигурацию полей в JSON-файл
+    fs.writeFileSync(fieldsConfigPath, JSON.stringify(fieldsConfig, null, 2));
+    
+    console.log(`✅ Конфигурация полей сохранена: ${Object.keys(fieldsConfig).length} полей`);
+    
+    // Для Railway: логируем для отладки
+    if (process.env.RAILWAY_SERVICE_ID) {
+      console.log('ℹ️ Конфигурация сохранена в Railway environment');
+    }
+
+    res.status(200).json({ 
+      message: 'Конфигурация полей успешно сохранена',
+      fieldsCount: Object.keys(fieldsConfig).length
+    });
   } catch (error) {
     console.error('Ошибка при сохранении конфигурации полей:', error.message);
     res.status(500).json({ error: 'Не удалось сохранить конфигурацию полей' });
