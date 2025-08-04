@@ -41,33 +41,22 @@ const statistics = {
 };
 
 // Google Credentials
-let creds;
-if (process.env.GOOGLE_CREDENTIALS) {
-  try {
-    // Пытаемся парсить Google Credentials для интеграции с Google Sheets
+let creds = null;
+try {
+  if (process.env.GOOGLE_CREDENTIALS) {
     const rawCredentials = process.env.GOOGLE_CREDENTIALS;
     creds = JSON.parse(rawCredentials);
     console.log('✅ Google Credentials успешно загружены');
-  } catch (error) {
-    console.log('⚠️  Google Credentials не загружены (это не критично для фильтров):', error.message);
-    creds = null;
-  }\"/g, '"').replace(/\\\\/g, '\\');
-    creds = JSON.parse(credentialsString);
-  } catch (error) {
-    console.error('Ошибка парсинга GOOGLE_CREDENTIALS:', error.message);
-    console.log('Пробуем альтернативный способ парсинга...');
-    // Альтернативный способ - убираем все экранирования
-    const cleanString = process.env.GOOGLE_CREDENTIALS.replace(/\\/g, '');
-    creds = JSON.parse(cleanString);
-  }
-} else if (process.env.GOOGLE_SERVICE_ACCOUNT) {
-  creds = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
-} else {
-  try {
+  } else if (process.env.GOOGLE_SERVICE_ACCOUNT) {
+    creds = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
+    console.log('✅ Google Service Account успешно загружен');
+  } else {
     creds = require('./google-credentials.json');
-  } catch (e) {
-    console.error('❌ Google credentials не найдены');
+    console.log('✅ Google Credentials загружены из файла');
   }
+} catch (error) {
+  console.log('⚠️  Google Credentials не загружены (это не критично для фильтров):', error.message);
+  creds = null;
 }
 
 // Глобальные экземпляры классов
