@@ -409,7 +409,8 @@
                             label.style.fontSize = '13px';
 
                             // Выделяем ЕВГ СПБ если найдем
-                            if (value.includes('ЕВГ') || value.includes('СПБ')) {
+                            const valueStr = String(value || '');
+                            if (valueStr.includes('ЕВГ') || valueStr.includes('СПБ')) {
                                 label.style.cssText += `
                                     background: linear-gradient(135deg, #28a745, #20c997);
                                     color: white;
