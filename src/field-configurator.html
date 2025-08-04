@@ -3,258 +3,527 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Конфигуратор полей | AmoCRM → Google Sheets</title>
+    <title>Конфигуратор полей | Data Integration Control Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8fafc;
-            min-height: 100vh;
-            padding: 20px;
+
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #1a1f2e;
+            --bg-card: #252a3a;
+            --bg-card-hover: #2a2f3f;
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #06b6d4;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --accent-error: #ef4444;
+            --border-color: #334155;
+            --glow-primary: rgba(59, 130, 246, 0.3);
+            --glow-success: rgba(16, 185, 129, 0.3);
+            --glow-warning: rgba(245, 158, 11, 0.3);
+            --glow-error: rgba(239, 68, 68, 0.3);
         }
-        
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Space Grotesk', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Health Ribbon */
+        .health-ribbon {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            padding: 8px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        .health-info {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .health-text {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .health-value {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .health-separator {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Container */
         .container {
             max-width: 1400px;
             margin: 0 auto;
+            padding: 40px 20px;
         }
-        
+
+        /* Header */
         .header {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        
-        h1 {
-            color: #1f2937;
-            font-size: 2.2em;
-            margin-bottom: 10px;
-        }
-        
-        .subtitle {
-            color: #6b7280;
-            font-size: 1.1em;
-        }
-        
-        .fields-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 20px;
-        }
-        
-        .field-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            border-left: 4px solid #3b82f6;
-            transition: transform 0.2s ease;
-        }
-        
-        .field-card:hover {
-            transform: translateY(-2px);
-        }
-        
-        .field-header {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 60px;
         }
-        
-        .field-name {
-            font-weight: 600;
-            color: #374151;
-            font-size: 1.1em;
-            flex: 1;
-        }
-        
-        .field-type {
-            background: #e0e7ff;
-            color: #3730a3;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.8em;
-            font-weight: 500;
-        }
-        
-        .field-mapping {
-            margin-bottom: 15px;
-        }
-        
-        .mapping-label {
-            display: block;
-            color: #6b7280;
-            font-size: 0.9em;
+
+        .header-content h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
             margin-bottom: 8px;
         }
-        
+
+        .title-primary {
+            background: linear-gradient(135deg, var(--accent-secondary), var(--accent-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .title-secondary {
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .header-subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            box-shadow: 0 0 20px var(--glow-primary);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px var(--glow-primary);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-success), #059669);
+            border: none;
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px var(--glow-success);
+        }
+
+        .icon {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        /* Search Section */
+        .search-section {
+            margin-bottom: 40px;
+        }
+
+        .search-container {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .search-box {
+            width: 100%;
+            max-width: 500px;
+            padding: 16px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--glow-primary);
+        }
+
+        .search-box::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Stats Section */
+        .stats-section {
+            margin-bottom: 40px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Fields Section */
+        .fields-section {
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 32px;
+        }
+
+        .fields-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+        }
+
+        .field-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .field-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--accent-error);
+            border-radius: 16px 16px 0 0;
+            transition: all 0.3s ease;
+        }
+
+        .field-card.mapped::before {
+            background: var(--accent-success);
+        }
+
+        .field-card:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+        }
+
+        .field-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .field-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .field-type {
+            background: var(--accent-primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .field-mapping {
+            margin-bottom: 16px;
+        }
+
+        .mapping-label {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
         .mapping-input {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #d1d5db;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
-            font-size: 0.9em;
-            transition: border-color 0.2s ease;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s ease;
         }
-        
+
         .mapping-input:focus {
             outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--glow-primary);
         }
-        
+
+        .mapping-input::placeholder {
+            color: var(--text-muted);
+        }
+
         .field-status {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
-        
+
         .status-indicator {
-            width: 8px;
-            height: 8px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
+            background: var(--accent-error);
+            box-shadow: 0 0 12px var(--glow-error);
         }
-        
-        .status-mapped { background: #10b981; }
-        .status-unmapped { background: #ef4444; }
-        .status-partial { background: #f59e0b; }
-        
+
+        .status-indicator.mapped {
+            background: var(--accent-success);
+            box-shadow: 0 0 12px var(--glow-success);
+        }
+
         .status-text {
-            font-size: 0.85em;
-            color: #6b7280;
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
         }
-        
+
+        /* Actions */
         .actions {
             position: sticky;
             bottom: 20px;
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            text-align: center;
-            margin-top: 30px;
-        }
-        
-        .btn {
-            display: inline-block;
-            padding: 12px 24px;
-            margin: 0 10px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
-        }
-        
-        .btn-primary {
-            background: #3b82f6;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #2563eb;
-        }
-        
-        .btn-secondary {
-            background: #6b7280;
-            color: white;
-        }
-        
-        .btn-secondary:hover {
-            background: #4b5563;
-        }
-        
-        .btn-success {
-            background: #10b981;
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: #059669;
-        }
-        
-        .search-box {
-            width: 100%;
-            max-width: 400px;
-            margin: 0 auto 30px;
-            padding: 12px 20px;
-            border: 1px solid #d1d5db;
-            border-radius: 25px;
-            font-size: 1em;
-            background: white;
-        }
-        
-        .search-box:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        
-        .stats {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
             display: flex;
             justify-content: center;
-            gap: 30px;
-            margin-bottom: 20px;
-            font-size: 0.9em;
-            color: #6b7280;
+            gap: 16px;
+            flex-wrap: wrap;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
         }
-        
-        .stat {
+
+        /* Loading */
+        .loading {
             text-align: center;
+            color: var(--text-muted);
+            font-style: italic;
+            grid-column: 1 / -1;
+            padding: 60px;
         }
-        
-        .stat-number {
-            display: block;
-            font-size: 1.5em;
-            font-weight: 600;
-            color: #374151;
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 16px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .header-content h1 {
+                font-size: 2rem;
+            }
+
+            .fields-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- System Health Ribbon -->
+    <div id="health-ribbon" class="health-ribbon">
+        <div class="health-info">
+            <span class="health-text">FIELD CONFIGURATOR</span>
+            <span id="configured-fields" class="health-value">--</span>
+            <span class="health-separator">|</span>
+            <span class="health-text">STATUS</span>
+            <span id="config-status" class="health-value">READY</span>
+        </div>
+    </div>
+
+    <!-- Main Container -->
     <div class="container">
-        <div class="header">
-            <h1>⚙️ Конфигуратор полей</h1>
-            <p class="subtitle">Настройка маппинга полей AmoCRM → Google Sheets</p>
-            
-            <input type="text" class="search-box" placeholder="🔍 Поиск полей..." id="searchBox">
-            
-            <div class="stats">
-                <div class="stat">
-                    <span class="stat-number" id="totalFields">-</span>
-                    <span>Всего полей</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-number" id="mappedFields">-</span>
-                    <span>Настроено</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-number" id="unmappedFields">-</span>
-                    <span>Не настроено</span>
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>
+                    <span class="title-primary">Field Configuration</span>
+                    <span class="title-secondary">Manager</span>
+                </h1>
+                <div class="header-subtitle">
+                    Настройка соответствий полей AmoCRM → Google Sheets
                 </div>
             </div>
-        </div>
-        
-        <div class="fields-container" id="fieldsContainer">
-            <div style="text-align: center; color: #6b7280; font-style: italic; grid-column: 1 / -1;">
-                Загрузка конфигурации полей...
+            <div class="header-actions">
+                <a href="/" class="btn-ghost">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M19 12H5m6-7l-7 7 7 7"/>
+                    </svg>
+                    Назад к панели
+                </a>
             </div>
-        </div>
-        
+        </header>
+
+        <!-- Search Section -->
+        <section class="search-section">
+            <div class="search-container">
+                <input type="text" class="search-box" placeholder="🔍 Поиск полей по названию или значению..." id="searchBox">
+            </div>
+        </section>
+
+        <!-- Stats Section -->
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalFields">-</div>
+                    <div class="stat-label">Всего полей</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="mappedFields">-</div>
+                    <div class="stat-label">Настроено</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="unmappedFields">-</div>
+                    <div class="stat-label">Не настроено</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="completionRate">-%</div>
+                    <div class="stat-label">Готовность</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Fields Section -->
+        <section class="fields-section">
+            <h2 class="section-title">Конфигурация полей</h2>
+            <div class="fields-grid" id="fieldsContainer">
+                <div class="loading">
+                    Загрузка конфигурации полей...
+                </div>
+            </div>
+        </section>
+
+        <!-- Actions -->
         <div class="actions">
-            <button class="btn btn-secondary" onclick="resetFields()">🔄 Сбросить</button>
-            <button class="btn btn-primary" onclick="validateConfig()">✅ Проверить</button>
-            <button class="btn btn-success" onclick="saveConfiguration()">💾 Сохранить конфигурацию</button>
-            <a href="/" class="btn btn-secondary">← Назад к панели</a>
+            <button class="btn-ghost" onclick="resetFields()">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M4 12a8 8 0 0 1 14.93-3M20 12a8 8 0 0 1-14.93 3"/>
+                </svg>
+                Сбросить
+            </button>
+            <button class="btn-ghost" onclick="validateConfig()">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M9 12l2 2 4-4"/>
+                    <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
+                </svg>
+                Проверить
+            </button>
+            <button class="btn-primary" onclick="previewConfig()">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                </svg>
+                Предпросмотр
+            </button>
+            <button class="btn-success" onclick="saveConfiguration()">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17,21 17,13 7,13 7,21"/>
+                    <polyline points="7,3 7,8 15,8"/>
+                </svg>
+                Сохранить конфигурацию
+            </button>
         </div>
     </div>
 
@@ -263,26 +532,42 @@
         let originalConfig = {};
         
         document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
             loadFieldsConfiguration();
+            setupEventListeners();
+        });
+
+        function initializeApp() {
+            console.log('🚀 Инициализация Field Configuration Manager');
             
             // Поиск по полям
             document.getElementById('searchBox').addEventListener('input', function(e) {
                 filterFields(e.target.value);
             });
-        });
+        }
         
         async function loadFieldsConfiguration() {
             try {
+                console.log('📊 Загрузка конфигурации полей...');
                 const response = await fetch('/config/fields');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
                 fieldsConfig = await response.json();
                 originalConfig = JSON.parse(JSON.stringify(fieldsConfig));
                 
                 renderFields();
                 updateStats();
+                
+                console.log('✅ Конфигурация полей загружена');
             } catch (error) {
-                console.error('Ошибка загрузки конфигурации:', error);
+                console.error('❌ Ошибка загрузки конфигурации:', error);
                 document.getElementById('fieldsContainer').innerHTML = 
-                    '<div style="text-align: center; color: #ef4444; grid-column: 1 / -1;">Ошибка загрузки конфигурации полей</div>';
+                    `<div class="loading" style="color: var(--accent-error);">
+                        ❌ Ошибка загрузки конфигурации полей: ${error.message}
+                    </div>`;
             }
         }
         
@@ -291,20 +576,20 @@
             const fields = Object.entries(fieldsConfig);
             
             if (fields.length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: #6b7280; grid-column: 1 / -1;">Нет доступных полей</div>';
+                container.innerHTML = '<div class="loading">Нет доступных полей для конфигурации</div>';
                 return;
             }
             
             const fieldsHtml = fields.map(([key, value]) => {
                 const isMapped = value && value.trim() !== '';
-                const statusClass = isMapped ? 'status-mapped' : 'status-unmapped';
-                const statusText = isMapped ? 'Настроено' : 'Не настроено';
+                const mappedClass = isMapped ? 'mapped' : '';
+                const statusText = isMapped ? 'НАСТРОЕНО' : 'НЕ НАСТРОЕНО';
                 
                 return `
-                    <div class="field-card" data-field-key="${key}">
+                    <div class="field-card ${mappedClass}" data-field-key="${key}">
                         <div class="field-header">
                             <div class="field-name">${key}</div>
-                            <div class="field-type">Текст</div>
+                            <div class="field-type">TEXT</div>
                         </div>
                         
                         <div class="field-mapping">
@@ -316,13 +601,14 @@
                                 class="mapping-input" 
                                 id="field-${key}"
                                 value="${value || ''}"
-                                placeholder="Например: Название сделки"
+                                placeholder="Введите название столбца в Google Sheets"
                                 onchange="updateFieldMapping('${key}', this.value)"
+                                oninput="updateFieldMapping('${key}', this.value)"
                             >
                         </div>
                         
                         <div class="field-status">
-                            <div class="status-indicator ${statusClass}"></div>
+                            <div class="status-indicator ${mappedClass}"></div>
                             <span class="status-text">${statusText}</span>
                         </div>
                     </div>
@@ -342,12 +628,17 @@
             const statusText = fieldCard.querySelector('.status-text');
             
             if (value && value.trim() !== '') {
-                statusIndicator.className = 'status-indicator status-mapped';
-                statusText.textContent = 'Настроено';
+                fieldCard.classList.add('mapped');
+                statusIndicator.classList.add('mapped');
+                statusText.textContent = 'НАСТРОЕНО';
             } else {
-                statusIndicator.className = 'status-indicator status-unmapped';
-                statusText.textContent = 'Не настроено';
+                fieldCard.classList.remove('mapped');
+                statusIndicator.classList.remove('mapped');
+                statusText.textContent = 'НЕ НАСТРОЕНО';
             }
+            
+            // Обновляем статус в ribbon
+            document.getElementById('config-status').textContent = 'MODIFIED';
         }
         
         function updateStats() {
@@ -355,15 +646,19 @@
             const mapped = fields.filter(([key, value]) => value && value.trim() !== '').length;
             const total = fields.length;
             const unmapped = total - mapped;
+            const completionRate = total > 0 ? Math.round((mapped / total) * 100) : 0;
             
             document.getElementById('totalFields').textContent = total;
             document.getElementById('mappedFields').textContent = mapped;
             document.getElementById('unmappedFields').textContent = unmapped;
+            document.getElementById('completionRate').textContent = completionRate;
+            document.getElementById('configured-fields').textContent = `${mapped}/${total}`;
         }
         
         function filterFields(searchTerm) {
             const fieldCards = document.querySelectorAll('.field-card');
             const term = searchTerm.toLowerCase();
+            let visibleCount = 0;
             
             fieldCards.forEach(card => {
                 const fieldKey = card.dataset.fieldKey.toLowerCase();
@@ -371,10 +666,13 @@
                 
                 if (fieldKey.includes(term) || fieldValue.includes(term)) {
                     card.style.display = 'block';
+                    visibleCount++;
                 } else {
                     card.style.display = 'none';
                 }
             });
+            
+            console.log(`🔍 Найдено полей: ${visibleCount}/${fieldCards.length}`);
         }
         
         function resetFields() {
@@ -382,6 +680,8 @@
                 fieldsConfig = JSON.parse(JSON.stringify(originalConfig));
                 renderFields();
                 updateStats();
+                document.getElementById('config-status').textContent = 'READY';
+                console.log('🔄 Конфигурация сброшена к исходному состоянию');
             }
         }
         
@@ -394,32 +694,68 @@
             fields.forEach(([key, value]) => {
                 if (!value || value.trim() === '') {
                     empty.push(key);
-                } else if (values.includes(value)) {
-                    duplicates.push(value);
+                } else if (values.includes(value.trim())) {
+                    duplicates.push(value.trim());
                 } else {
-                    values.push(value);
+                    values.push(value.trim());
                 }
             });
             
-            let message = 'Проверка конфигурации:\\n\\n';
+            let message = '🔍 Результаты проверки конфигурации:\n\n';
+            let isValid = true;
             
             if (empty.length > 0) {
-                message += `⚠️ Не настроенные поля (${empty.length}): ${empty.slice(0, 5).join(', ')}${empty.length > 5 ? '...' : ''}\\n\\n`;
+                message += `⚠️ Не настроенные поля (${empty.length}):\n`;
+                message += empty.slice(0, 10).join(', ');
+                if (empty.length > 10) message += ` и еще ${empty.length - 10}...`;
+                message += '\n\n';
+                isValid = false;
             }
             
             if (duplicates.length > 0) {
-                message += `❌ Дублирующиеся значения: ${duplicates.join(', ')}\\n\\n`;
+                message += `❌ Дублирующиеся значения:\n${duplicates.join(', ')}\n\n`;
+                isValid = false;
             }
             
-            if (empty.length === 0 && duplicates.length === 0) {
-                message += '✅ Конфигурация корректна!';
+            if (isValid) {
+                message += '✅ Конфигурация корректна!\nВсе поля настроены правильно, дублирований не найдено.';
+            } else {
+                message += '⚠️ Обнаружены проблемы в конфигурации. Рекомендуется исправить их перед сохранением.';
             }
             
             alert(message);
+            console.log('✅ Валидация конфигурации завершена:', { empty: empty.length, duplicates: duplicates.length });
+        }
+        
+        function previewConfig() {
+            const fields = Object.entries(fieldsConfig);
+            const mapped = fields.filter(([key, value]) => value && value.trim() !== '');
+            
+            let preview = '📋 Предпросмотр конфигурации:\n\n';
+            preview += `Всего полей: ${fields.length}\n`;
+            preview += `Настроено: ${mapped.length}\n`;
+            preview += `Готовность: ${Math.round((mapped.length / fields.length) * 100)}%\n\n`;
+            
+            if (mapped.length > 0) {
+                preview += 'Настроенные соответствия:\n';
+                mapped.slice(0, 10).forEach(([key, value]) => {
+                    preview += `• ${key} → ${value}\n`;
+                });
+                
+                if (mapped.length > 10) {
+                    preview += `... и еще ${mapped.length - 10} полей\n`;
+                }
+            }
+            
+            alert(preview);
         }
         
         async function saveConfiguration() {
             try {
+                document.getElementById('config-status').textContent = 'SAVING...';
+                
+                console.log('💾 Сохранение конфигурации...');
+                
                 const response = await fetch('/config/fields', {
                     method: 'POST',
                     headers: {
@@ -428,16 +764,72 @@
                     body: JSON.stringify(fieldsConfig)
                 });
                 
-                if (response.ok) {
-                    const result = await response.json();
-                    alert('✅ Конфигурация успешно сохранена!');
-                    originalConfig = JSON.parse(JSON.stringify(fieldsConfig));
-                } else {
-                    throw new Error('Ошибка сохранения');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
+                
+                const result = await response.json();
+                
+                // Обновляем оригинальную конфигурацию
+                originalConfig = JSON.parse(JSON.stringify(fieldsConfig));
+                
+                document.getElementById('config-status').textContent = 'SAVED';
+                
+                setTimeout(() => {
+                    document.getElementById('config-status').textContent = 'READY';
+                }, 2000);
+                
+                alert('✅ Конфигурация успешно сохранена!\n\nВсе изменения применены и будут использоваться при синхронизации данных.');
+                
+                console.log('✅ Конфигурация сохранена успешно');
+                
             } catch (error) {
-                alert('❌ Ошибка сохранения конфигурации: ' + error.message);
+                document.getElementById('config-status').textContent = 'ERROR';
+                
+                setTimeout(() => {
+                    document.getElementById('config-status').textContent = 'READY';
+                }, 3000);
+                
+                alert('❌ Ошибка сохранения конфигурации:\n\n' + error.message + '\n\nПопробуйте еще раз или обратитесь к администратору.');
+                
+                console.error('❌ Ошибка сохранения:', error);
             }
+        }
+
+        function setupEventListeners() {
+            // Автосохранение при потере фокуса (опционально)
+            let saveTimeout;
+            
+            document.addEventListener('input', function(e) {
+                if (e.target.classList.contains('mapping-input')) {
+                    clearTimeout(saveTimeout);
+                    saveTimeout = setTimeout(() => {
+                        console.log('💾 Автосохранение изменений...');
+                        // Можно добавить автосохранение здесь
+                    }, 5000);
+                }
+            });
+            
+            // Горячие клавиши
+            document.addEventListener('keydown', function(e) {
+                // Ctrl+S для сохранения
+                if (e.ctrlKey && e.key === 's') {
+                    e.preventDefault();
+                    saveConfiguration();
+                }
+                
+                // Ctrl+R для сброса
+                if (e.ctrlKey && e.key === 'r') {
+                    e.preventDefault();
+                    resetFields();
+                }
+                
+                // Ctrl+F для поиска
+                if (e.ctrlKey && e.key === 'f') {
+                    e.preventDefault();
+                    document.getElementById('searchBox').focus();
+                }
+            });
         }
     </script>
 </body>

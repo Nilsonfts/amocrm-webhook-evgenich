@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конфигуратор полей | AmoCRM → Google Sheets</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #1f2937;
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #6b7280;
+            font-size: 1.1em;
+        }
+        
+        .fields-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        
+        .field-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-left: 4px solid #3b82f6;
+            transition: transform 0.2s ease;
+        }
+        
+        .field-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .field-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .field-name {
+            font-weight: 600;
+            color: #374151;
+            font-size: 1.1em;
+            flex: 1;
+        }
+        
+        .field-type {
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        
+        .field-mapping {
+            margin-bottom: 15px;
+        }
+        
+        .mapping-label {
+            display: block;
+            color: #6b7280;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+        
+        .mapping-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.9em;
+            transition: border-color 0.2s ease;
+        }
+        
+        .mapping-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .field-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .status-mapped { background: #10b981; }
+        .status-unmapped { background: #ef4444; }
+        .status-partial { background: #f59e0b; }
+        
+        .status-text {
+            font-size: 0.85em;
+            color: #6b7280;
+        }
+        
+        .actions {
+            position: sticky;
+            bottom: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        .search-box {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto 30px;
+            padding: 12px 20px;
+            border: 1px solid #d1d5db;
+            border-radius: 25px;
+            font-size: 1em;
+            background: white;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            color: #6b7280;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-number {
+            display: block;
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #374151;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ Конфигуратор полей</h1>
+            <p class="subtitle">Настройка маппинга полей AmoCRM → Google Sheets</p>
+            
+            <input type="text" class="search-box" placeholder="🔍 Поиск полей..." id="searchBox">
+            
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-number" id="totalFields">-</span>
+                    <span>Всего полей</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number" id="mappedFields">-</span>
+                    <span>Настроено</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number" id="unmappedFields">-</span>
+                    <span>Не настроено</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="fields-container" id="fieldsContainer">
+            <div style="text-align: center; color: #6b7280; font-style: italic; grid-column: 1 / -1;">
+                Загрузка конфигурации полей...
+            </div>
+        </div>
+        
+        <div class="actions">
+            <button class="btn btn-secondary" onclick="resetFields()">🔄 Сбросить</button>
+            <button class="btn btn-primary" onclick="validateConfig()">✅ Проверить</button>
+            <button class="btn btn-success" onclick="saveConfiguration()">💾 Сохранить конфигурацию</button>
+            <a href="/" class="btn btn-secondary">← Назад к панели</a>
+        </div>
+    </div>
+
+    <script>
+        let fieldsConfig = {};
+        let originalConfig = {};
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFieldsConfiguration();
+            
+            // Поиск по полям
+            document.getElementById('searchBox').addEventListener('input', function(e) {
+                filterFields(e.target.value);
+            });
+        });
+        
+        async function loadFieldsConfiguration() {
+            try {
+                const response = await fetch('/config/fields');
+                fieldsConfig = await response.json();
+                originalConfig = JSON.parse(JSON.stringify(fieldsConfig));
+                
+                renderFields();
+                updateStats();
+            } catch (error) {
+                console.error('Ошибка загрузки конфигурации:', error);
+                document.getElementById('fieldsContainer').innerHTML = 
+                    '<div style="text-align: center; color: #ef4444; grid-column: 1 / -1;">Ошибка загрузки конфигурации полей</div>';
+            }
+        }
+        
+        function renderFields() {
+            const container = document.getElementById('fieldsContainer');
+            const fields = Object.entries(fieldsConfig);
+            
+            if (fields.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #6b7280; grid-column: 1 / -1;">Нет доступных полей</div>';
+                return;
+            }
+            
+            const fieldsHtml = fields.map(([key, value]) => {
+                const isMapped = value && value.trim() !== '';
+                const statusClass = isMapped ? 'status-mapped' : 'status-unmapped';
+                const statusText = isMapped ? 'Настроено' : 'Не настроено';
+                
+                return `
+                    <div class="field-card" data-field-key="${key}">
+                        <div class="field-header">
+                            <div class="field-name">${key}</div>
+                            <div class="field-type">Текст</div>
+                        </div>
+                        
+                        <div class="field-mapping">
+                            <label class="mapping-label" for="field-${key}">
+                                Соответствие в Google Sheets:
+                            </label>
+                            <input 
+                                type="text" 
+                                class="mapping-input" 
+                                id="field-${key}"
+                                value="${value || ''}"
+                                placeholder="Например: Название сделки"
+                                onchange="updateFieldMapping('${key}', this.value)"
+                            >
+                        </div>
+                        
+                        <div class="field-status">
+                            <div class="status-indicator ${statusClass}"></div>
+                            <span class="status-text">${statusText}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = fieldsHtml;
+        }
+        
+        function updateFieldMapping(key, value) {
+            fieldsConfig[key] = value;
+            updateStats();
+            
+            // Обновляем статус поля
+            const fieldCard = document.querySelector(`[data-field-key="${key}"]`);
+            const statusIndicator = fieldCard.querySelector('.status-indicator');
+            const statusText = fieldCard.querySelector('.status-text');
+            
+            if (value && value.trim() !== '') {
+                statusIndicator.className = 'status-indicator status-mapped';
+                statusText.textContent = 'Настроено';
+            } else {
+                statusIndicator.className = 'status-indicator status-unmapped';
+                statusText.textContent = 'Не настроено';
+            }
+        }
+        
+        function updateStats() {
+            const fields = Object.entries(fieldsConfig);
+            const mapped = fields.filter(([key, value]) => value && value.trim() !== '').length;
+            const total = fields.length;
+            const unmapped = total - mapped;
+            
+            document.getElementById('totalFields').textContent = total;
+            document.getElementById('mappedFields').textContent = mapped;
+            document.getElementById('unmappedFields').textContent = unmapped;
+        }
+        
+        function filterFields(searchTerm) {
+            const fieldCards = document.querySelectorAll('.field-card');
+            const term = searchTerm.toLowerCase();
+            
+            fieldCards.forEach(card => {
+                const fieldKey = card.dataset.fieldKey.toLowerCase();
+                const fieldValue = (fieldsConfig[card.dataset.fieldKey] || '').toLowerCase();
+                
+                if (fieldKey.includes(term) || fieldValue.includes(term)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+        
+        function resetFields() {
+            if (confirm('Сбросить все изменения и вернуться к исходной конфигурации?')) {
+                fieldsConfig = JSON.parse(JSON.stringify(originalConfig));
+                renderFields();
+                updateStats();
+            }
+        }
+        
+        function validateConfig() {
+            const fields = Object.entries(fieldsConfig);
+            const duplicates = [];
+            const empty = [];
+            const values = [];
+            
+            fields.forEach(([key, value]) => {
+                if (!value || value.trim() === '') {
+                    empty.push(key);
+                } else if (values.includes(value)) {
+                    duplicates.push(value);
+                } else {
+                    values.push(value);
+                }
+            });
+            
+            let message = 'Проверка конфигурации:\\n\\n';
+            
+            if (empty.length > 0) {
+                message += `⚠️ Не настроенные поля (${empty.length}): ${empty.slice(0, 5).join(', ')}${empty.length > 5 ? '...' : ''}\\n\\n`;
+            }
+            
+            if (duplicates.length > 0) {
+                message += `❌ Дублирующиеся значения: ${duplicates.join(', ')}\\n\\n`;
+            }
+            
+            if (empty.length === 0 && duplicates.length === 0) {
+                message += '✅ Конфигурация корректна!';
+            }
+            
+            alert(message);
+        }
+        
+        async function saveConfiguration() {
+            try {
+                const response = await fetch('/config/fields', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(fieldsConfig)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    alert('✅ Конфигурация успешно сохранена!');
+                    originalConfig = JSON.parse(JSON.stringify(fieldsConfig));
+                } else {
+                    throw new Error('Ошибка сохранения');
+                }
+            } catch (error) {
+                alert('❌ Ошибка сохранения конфигурации: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
