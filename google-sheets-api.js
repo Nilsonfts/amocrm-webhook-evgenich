@@ -12,9 +12,12 @@ class GoogleSheetsAPI {
 
   async initialize() {
     try {
+      // Исправляем переносы строк в private_key
+      const fixedKey = this.credentials.private_key.replace(/\\n/g, '\n');
+      
       const serviceAccountAuth = new JWT({
         email: this.credentials.client_email,
-        key: this.credentials.private_key,
+        key: fixedKey,
         scopes: ['https://www.googleapis.com/auth/spreadsheets']
       });
 

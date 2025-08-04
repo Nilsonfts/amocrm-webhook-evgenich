@@ -315,6 +315,161 @@ app.post('/sync/force', async (req, res) => {
   }
 });
 
+// ЭНДПОИНТ: Полный тест системы
+app.get('/test/system', async (req, res) => {
+  const results = {
+    timestamp: new Date().toISOString(),
+    tests: {
+      googleCredentials: false,
+      googleSheetsInit: false,
+      columnStructure: false,
+      amoCrmConnection: false
+    },
+    errors: [],
+    details: {}
+  };
+
+  try {
+    // Тест 1: Google Credentials
+    if (creds && creds.client_email && creds.private_key) {
+      results.tests.googleCredentials = true;
+      results.details.googleEmail = creds.client_email;
+    } else {
+      results.errors.push('Google Credentials не загружены');
+    }
+
+    // Тест 2: Структура колонок
+    const columnCount = Object.keys(COLUMN_STRUCTURE).length;
+    if (columnCount === 42) {
+      results.tests.columnStructure = true;
+      results.details.columnCount = columnCount;
+    } else {
+      results.errors.push(`Неправильное количество колонок: ${columnCount}, ожидается 42`);
+    }
+
+    // Тест 3: Google Sheets инициализация
+    if (googleSheets && googleSheets.doc) {
+      results.tests.googleSheetsInit = true;
+      results.details.spreadsheetTitle = googleSheets.doc.title;
+    } else {
+      results.errors.push('Google Sheets не инициализирован');
+    }
+
+    // Тест 4: AmoCRM подключение
+    if (amoCRM && amoCRM.domain) {
+      results.tests.amoCrmConnection = true;
+      results.details.amoDomain = amoCRM.domain;
+    } else {
+      results.errors.push('AmoCRM не инициализирован');
+    }
+
+    results.success = results.errors.length === 0;
+    results.summary = `${Object.values(results.tests).filter(t => t).length}/4 тестов пройдено`;
+
+  } catch (error) {
+    results.errors.push(`Ошибка тестирования: ${error.message}`);
+    results.success = false;
+  }
+
+  res.json(results);
+});
+
+// НОВЫЙ ЭНДПОИНТ: Добавление тестовой строки в Google Sheets (уже существует)
+app.post('/test/add-row', async (req, res) => {
+  console.log('🧪 Добавление тестовой строки в Google Sheets...');
+  
+  // Быстро отвечаем клиенту
+  res.status(200).json({
+    status: 'started',
+    message: 'Добавление тестовой строки запущено'
+  });
+  
+  try {
+    if (!googleSheets) {
+      console.error('❌ Google Sheets не инициализирован');
+      return;
+    }
+
+    // Создаем тестовые данные для всех колонок
+    const testData = [];
+    const headers = Object.keys(COLUMN_STRUCTURE);
+    
+    console.log(`📊 Создаем тестовую строку с ${headers.length} колонками`);
+    
+    headers.forEach((header, index) => {
+      switch (header) {
+        case 'ID':
+          testData.push('TEST-12345');
+          break;
+        case 'Название сделки':
+          testData.push('🧪 Тестовая сделка - ' + new Date().toLocaleString('ru-RU'));
+          break;
+        case 'Основной контакт':
+          testData.push('Тестовый контакт');
+          break;
+        case 'Ответственный':
+          testData.push('Тестовый менеджер');
+          break;
+        case 'Этап сделки':
+          testData.push('Тестовый этап');
+          break;
+        case 'Бюджет':
+          testData.push('50000');
+          break;
+        case 'Дата создания':
+          testData.push(new Date().toLocaleDateString('ru-RU'));
+          break;
+        case 'Кем создана':
+          testData.push('Система тестирования');
+          break;
+        case 'Бар (deal)':
+          testData.push('РВБ СПБ Г28');
+          break;
+        case 'Дата брони':
+          testData.push(new Date().toLocaleDateString('ru-RU'));
+          break;
+        case 'Кол-во гостей':
+          testData.push('4');
+          break;
+        case 'Время прихода':
+          testData.push('19:00');
+          break;
+        case 'Комментарий МОБ':
+          testData.push('Тестовый комментарий для проверки системы');
+          break;
+        case 'Тип лида':
+          testData.push('Целевой');
+          break;
+        case 'Рабочий телефон (контакт)':
+          testData.push('+7 (999) 123-45-67');
+          break;
+        default:
+          testData.push(`Тест ${index + 1}`);
+          break;
+      }
+    });
+    
+    console.log('📝 Тестовые данные подготовлены:', testData.slice(0, 5).join(', '), '...');
+    
+    // Добавляем строку в Google Sheets
+    await googleSheets.sheets.spreadsheets.values.append({
+      spreadsheetId: googleSheets.spreadsheetId,
+      range: 'A:AZ',
+      valueInputOption: 'RAW',
+      resource: {
+        values: [testData]
+      }
+    });
+    
+    console.log('✅ Тестовая строка успешно добавлена в Google Sheets!');
+    console.log(`📊 Добавлено ${testData.length} значений в строку`);
+    
+  } catch (error) {
+    console.error('❌ Ошибка добавления тестовой строки:', error.message);
+    console.error('📝 Детали ошибки:', error.stack);
+  }
+});
+
 // НОВЫЙ ЭНДПОИНТ: Очистка таблицы от сделок не ЕВГ СПБ
 app.post('/clear-non-evg-deals', async (req, res) => {
   console.log('🧹 Запуск очистки таблицы от сделок не ЕВГ СПБ...');
