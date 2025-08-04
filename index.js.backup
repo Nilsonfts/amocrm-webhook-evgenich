@@ -41,22 +41,25 @@ const statistics = {
 };
 
 // Google Credentials
-let creds = null;
-try {
-  if (process.env.GOOGLE_CREDENTIALS) {
+let creds;
+if (process.env.GOOGLE_CREDENTIALS) {
+  try {
+    // Пытаемся парсить Google Credentials для интеграции с Google Sheets
     const rawCredentials = process.env.GOOGLE_CREDENTIALS;
     creds = JSON.parse(rawCredentials);
     console.log('✅ Google Credentials успешно загружены');
-  } else if (process.env.GOOGLE_SERVICE_ACCOUNT) {
-    creds = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
-    console.log('✅ Google Service Account успешно загружен');
-  } else {
-    creds = require('./google-credentials.json');
-    console.log('✅ Google Credentials загружены из файла');
+  } catch (error) {
+    console.log('⚠️  Google Credentials не загружены (это не критично для фильтров):', error.message);
+    creds = null;
   }
-} catch (error) {
-  console.log('⚠️  Google Credentials не загружены (это не критично для фильтров):', error.message);
-  creds = null;
+} else if (process.env.GOOGLE_SERVICE_ACCOUNT) {
+  creds = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
+} else {
+  try {
+    creds = require('./google-credentials.json');
+  } catch (e) {
+    console.error('❌ Google credentials не найдены');
+  }
 }
 
 // Глобальные экземпляры классов
@@ -1131,11 +1134,6 @@ app.post('/config/fields', (req, res) => {
 // Маршрут для конфигуратора полей
 app.get('/field-configurator', (req, res) => {
   res.sendFile(path.join(__dirname, 'src', 'field-configurator.html'));
-});
-
-// Маршрут для интерфейса фильтров
-app.get('/filters', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'filters.html'));
 });
 
 // Подключаем статические файлы ПОСЛЕ API маршрутов

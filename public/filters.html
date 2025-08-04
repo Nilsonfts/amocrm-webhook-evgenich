@@ -296,6 +296,9 @@
                 const response = await fetch('/api/filter-options');
                 const data = await response.json();
                 
+                console.log('🔍 Загруженные данные фильтров:', data);
+                console.log('🔍 Кастомные поля:', data.data?.customFields);
+                
                 if (data.success) {
                     filterData = data.data;
                     renderFilters();
@@ -323,7 +326,12 @@
             const container = document.getElementById('custom-fields');
             container.innerHTML = '';
 
+            console.log('🔍 Отрисовка кастомных полей:', filterData.customFields);
+            console.log('🔍 Количество кастомных полей:', Object.keys(filterData.customFields || {}).length);
+
             Object.entries(filterData.customFields).forEach(([fieldName, fieldData]) => {
+                console.log(`🔍 Обрабатываем поле: ${fieldName}`, fieldData);
+                
                 if (fieldData.values.length > 0) {
                     const fieldSection = document.createElement('div');
                     fieldSection.style.marginBottom = '20px';
