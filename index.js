@@ -881,35 +881,45 @@ app.get('/api/filter-options', async (req, res) => {
     
     const pipelines = pipelinesResponse.data._embedded?.pipelines || [];
     
-    // Получаем примеры сделок для анализа полей
-    const dealsResponse = await axios.get(`https://${AMO_DOMAIN}/api/v4/leads`, {
-      headers: { 'Authorization': `Bearer ${AMO_TOKEN}` },
-      params: { 'with': 'custom_fields_values', 'limit': 100 }
-    });
-    
-    const deals = dealsResponse.data._embedded?.leads || [];
-    
-    // Собираем все пользовательские поля и их значения
+    // Получаем примеры сделок для анализа полей - проверяем несколько страниц
     const fieldsMap = new Map();
     
-    for (const deal of deals) {
-      if (deal.custom_fields_values) {
-        deal.custom_fields_values.forEach(field => {
-          if (!fieldsMap.has(field.field_name)) {
-            fieldsMap.set(field.field_name, {
-              field_id: field.field_id,
-              field_name: field.field_name,
-              values: new Set()
-            });
-          }
-          
-          if (field.values && field.values[0]) {
-            const fieldData = fieldsMap.get(field.field_name);
-            fieldData.values.add(field.values[0].value);
-          }
-        });
+    for (let page = 1; page <= 3; page++) {
+      const dealsResponse = await axios.get(`https://${AMO_DOMAIN}/api/v4/leads`, {
+        headers: { 'Authorization': `Bearer ${AMO_TOKEN}` },
+        params: { 'with': 'custom_fields_values', 'limit': 250, 'page': page }
+      });
+      
+      const deals = dealsResponse.data._embedded?.leads || [];
+      if (deals.length === 0) break;
+      
+      // Собираем все пользовательские поля и их значения
+      for (const deal of deals) {
+        if (deal.custom_fields_values) {
+          deal.custom_fields_values.forEach(field => {
+            if (!fieldsMap.has(field.field_name)) {
+              fieldsMap.set(field.field_name, {
+                field_id: field.field_id,
+                field_name: field.field_name,
+                values: new Set()
+              });
+            }
+            
+            if (field.values && field.values[0]) {
+              const fieldData = fieldsMap.get(field.field_name);
+              fieldData.values.add(field.values[0].value);
+            }
+          });
+        }
       }
     }
+    
+    console.log(`🔍 Найдено полей: ${fieldsMap.size}`);
+    fieldsMap.forEach((data, name) => {
+      if (name.includes('Бар')) {
+        console.log(`🎯 Поле "${name}": ${Array.from(data.values).join(', ')}`);
+      }
+    });
     
     // Преобразуем в удобный для фронта формат
     const customFields = {};
@@ -934,7 +944,7 @@ app.get('/api/filter-options', async (req, res) => {
           })) || []
         })),
         customFields,
-        totalDeals: deals.length,
+        totalFields: fieldsMap.size,
         timestamp: new Date().toISOString()
       }
     });

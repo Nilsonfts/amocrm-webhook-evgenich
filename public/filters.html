@@ -329,40 +329,105 @@
             console.log('🔍 Отрисовка кастомных полей:', filterData.customFields);
             console.log('🔍 Количество кастомных полей:', Object.keys(filterData.customFields || {}).length);
 
+            // Группировка полей по категориям
+            const fieldCategories = {
+                'Бар (deal)': [],
+                'Адреса баров': [],
+                'Другие поля': []
+            };
+
             Object.entries(filterData.customFields).forEach(([fieldName, fieldData]) => {
                 console.log(`🔍 Обрабатываем поле: ${fieldName}`, fieldData);
                 
                 if (fieldData.values.length > 0) {
-                    const fieldSection = document.createElement('div');
-                    fieldSection.style.marginBottom = '20px';
-                    fieldSection.style.paddingBottom = '15px';
-                    fieldSection.style.borderBottom = '2px solid #eee';
+                    if (fieldName.includes('Бар')) {
+                        fieldCategories['Бар (deal)'].push([fieldName, fieldData]);
+                    } else if (fieldName.includes('Адреса')) {
+                        fieldCategories['Адреса баров'].push([fieldName, fieldData]);
+                    } else {
+                        fieldCategories['Другие поля'].push([fieldName, fieldData]);
+                    }
+                }
+            });
 
-                    const fieldTitle = document.createElement('h4');
-                    fieldTitle.textContent = fieldName;
-                    fieldTitle.style.color = '#495057';
-                    fieldTitle.style.marginBottom = '10px';
-                    fieldSection.appendChild(fieldTitle);
+            // Отрисовка каждой категории
+            Object.entries(fieldCategories).forEach(([categoryName, fields]) => {
+                if (fields.length > 0) {
+                    // Создаем заголовок категории
+                    const categoryHeader = document.createElement('div');
+                    categoryHeader.style.cssText = `
+                        background: linear-gradient(135deg, #667eea, #764ba2);
+                        color: white;
+                        padding: 10px 15px;
+                        margin: 10px 0 5px 0;
+                        border-radius: 8px;
+                        font-weight: bold;
+                        font-size: 14px;
+                        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+                    `;
+                    categoryHeader.textContent = categoryName;
+                    container.appendChild(categoryHeader);
 
-                    fieldData.values.forEach(value => {
-                        const checkboxItem = document.createElement('div');
-                        checkboxItem.className = 'checkbox-item';
+                    // Создаем контейнер для полей категории
+                    const categoryContainer = document.createElement('div');
+                    categoryContainer.style.cssText = `
+                        background: #f8f9fa;
+                        border: 2px solid #e9ecef;
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin-bottom: 20px;
+                    `;
 
-                        const checkbox = document.createElement('input');
-                        checkbox.type = 'checkbox';
-                        checkbox.id = `${fieldName}-${value}`;
-                        checkbox.onchange = () => updateCustomFieldFilter(fieldName, value, checkbox.checked);
+                    fields.forEach(([fieldName, fieldData]) => {
+                        const fieldSection = document.createElement('div');
+                        fieldSection.style.marginBottom = '15px';
+                        fieldSection.style.paddingBottom = '10px';
+                        fieldSection.style.borderBottom = '1px solid #dee2e6';
 
-                        const label = document.createElement('label');
-                        label.htmlFor = checkbox.id;
-                        label.textContent = value;
+                        const fieldTitle = document.createElement('h4');
+                        fieldTitle.textContent = fieldName;
+                        fieldTitle.style.cssText = `
+                            color: #495057;
+                            margin-bottom: 8px;
+                            font-size: 13px;
+                            font-weight: 600;
+                        `;
+                        fieldSection.appendChild(fieldTitle);
 
-                        checkboxItem.appendChild(checkbox);
-                        checkboxItem.appendChild(label);
-                        fieldSection.appendChild(checkboxItem);
+                        fieldData.values.forEach(value => {
+                            const checkboxItem = document.createElement('div');
+                            checkboxItem.className = 'checkbox-item';
+
+                            const checkbox = document.createElement('input');
+                            checkbox.type = 'checkbox';
+                            checkbox.id = `${fieldName}-${value}`;
+                            checkbox.onchange = () => updateCustomFieldFilter(fieldName, value, checkbox.checked);
+
+                            const label = document.createElement('label');
+                            label.htmlFor = checkbox.id;
+                            label.textContent = value;
+                            label.style.fontSize = '13px';
+
+                            // Выделяем ЕВГ СПБ если найдем
+                            if (value.includes('ЕВГ') || value.includes('СПБ')) {
+                                label.style.cssText += `
+                                    background: linear-gradient(135deg, #28a745, #20c997);
+                                    color: white;
+                                    padding: 2px 6px;
+                                    border-radius: 4px;
+                                    font-weight: bold;
+                                `;
+                            }
+
+                            checkboxItem.appendChild(checkbox);
+                            checkboxItem.appendChild(label);
+                            fieldSection.appendChild(checkboxItem);
+                        });
+
+                        categoryContainer.appendChild(fieldSection);
                     });
 
-                    container.appendChild(fieldSection);
+                    container.appendChild(categoryContainer);
                 }
             });
         }
