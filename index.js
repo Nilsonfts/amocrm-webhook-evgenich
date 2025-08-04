@@ -26,7 +26,7 @@ console.log(`   AMO_DOMAIN: ${AMO_DOMAIN}`);
 console.log(`   GOOGLE_SHEET_ID: ${GOOGLE_SHEET_ID}`);
 console.log(`   AMO_CLIENT_ID: ${AMO_CLIENT_ID ? '✅ установлен' : '❌ не установлен'}`);
 console.log(`   AMO_CLIENT_SECRET: ${AMO_CLIENT_SECRET ? '✅ установлен' : '❌ не установлен'}`);
-console.log(`   Структура данных: ${COLUMN_STRUCTURE.length} колонок`);
+console.log(`   Структура данных: ${Object.keys(COLUMN_STRUCTURE).length} колонок`);
 
 // Глобальная статистика
 const statistics = {
@@ -43,7 +43,17 @@ const statistics = {
 // Google Credentials
 let creds;
 if (process.env.GOOGLE_CREDENTIALS) {
-  creds = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+  try {
+    // Убираем лишние экранирования и парсим JSON
+    const credentialsString = process.env.GOOGLE_CREDENTIALS.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+    creds = JSON.parse(credentialsString);
+  } catch (error) {
+    console.error('Ошибка парсинга GOOGLE_CREDENTIALS:', error.message);
+    console.log('Пробуем альтернативный способ парсинга...');
+    // Альтернативный способ - убираем все экранирования
+    const cleanString = process.env.GOOGLE_CREDENTIALS.replace(/\\/g, '');
+    creds = JSON.parse(cleanString);
+  }
 } else if (process.env.GOOGLE_SERVICE_ACCOUNT) {
   creds = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
 } else {
@@ -547,7 +557,7 @@ app.get('/api/stats', (req, res) => {
       synchronizer: !!synchronizer
     },
     columnStructure: {
-      total: COLUMN_STRUCTURE.length,
+      total: Object.keys(COLUMN_STRUCTURE).length,
       columns: COLUMN_STRUCTURE
     },
     // Дополнительная информация для отладки
@@ -585,7 +595,7 @@ app.get('/api/info', (req, res) => {
       info: 'GET /api/info - Информация о системе'
     },
     structure: {
-      columns: COLUMN_STRUCTURE.length,
+      columns: Object.keys(COLUMN_STRUCTURE).length,
       description: 'Автоматическая выгрузка сделок amoCRM в Google Sheets с полной структурой данных'
     }
   });
@@ -793,7 +803,7 @@ async function startServer() {
   
   app.listen(port, () => {
     console.log(`🚀 Сервер запущен на порту ${port}`);
-    console.log(`📊 Структура данных: ${COLUMN_STRUCTURE.length} колонок`);
+    console.log(`📊 Структура данных: ${Object.keys(COLUMN_STRUCTURE).length} колонок`);
     console.log(`⏰ Ежедневная синхронизация настроена на 04:00 МСК`);
     console.log(`🌐 Доступные API эндпоинты:`);
     console.log(`   GET  /api/info - Информация о сервисе`);
