@@ -1,0 +1,11 @@
+{
+  "selectedFields": [
+    {
+      "id": 493359,
+      "name": "Бар (deal)",
+      "type": "select",
+      "columnName": "Бар",
+      "enabled": true
+    }
+  ]
+}

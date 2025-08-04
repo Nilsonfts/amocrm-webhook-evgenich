@@ -1,0 +1,5 @@
+[build]
+command = "echo 'Пропускаем сборку frontend - используем готовые файлы'"
+
+[deploy]
+startCommand = "node index.js"

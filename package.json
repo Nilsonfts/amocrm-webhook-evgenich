@@ -1,0 +1,41 @@
+{
+  "name": "amocrm-webhook-evgenich",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "build": "echo 'Сборка не требуется - используем готовые файлы'",
+    "build:dev": "echo 'Разработка через backend'",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.7",
+    "body-parser": "^2.2.0",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "form-data": "^4.0.4",
+    "google-auth-library": "^8.9.0",
+    "google-spreadsheet": "^3.3.0",
+    "node-cron": "^4.2.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.28.0",
+    "@babel/preset-env": "^7.28.0",
+    "@babel/preset-react": "^7.27.1",
+    "babel-loader": "^10.0.0",
+    "css-loader": "^7.1.2",
+    "debug": "^4.4.1",
+    "dotenv-cli": "^10.0.0",
+    "postcss-loader": "^8.1.1",
+    "style-loader": "^4.0.0",
+    "webpack": "^5.101.0",
+    "webpack-cli": "^6.0.1"
+  }
+}

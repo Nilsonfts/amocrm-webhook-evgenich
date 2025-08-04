@@ -1,0 +1,5 @@
+google-credentials.json
+google-credentials-new.json
+.env.test
+.env.production
+node_modules/
