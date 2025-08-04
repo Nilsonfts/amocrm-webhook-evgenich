@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AmoCRM Фильтры экспорта</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .filter-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .filter-section:hover {
+            border-color: #667eea;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.1);
+        }
+
+        .filter-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-options {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .filter-options::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .filter-options::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .filter-options::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 3px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .checkbox-item:last-child {
+            border-bottom: none;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 12px;
+            transform: scale(1.2);
+            accent-color: #667eea;
+        }
+
+        .checkbox-item label {
+            cursor: pointer;
+            color: #495057;
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .count-badge {
+            background: #667eea;
+            color: white;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #667eea;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .export-section {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 15px;
+            color: white;
+        }
+
+        .export-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .export-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .export-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .selected-filters {
+            background: #e8f5e8;
+            border: 2px solid #28a745;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .selected-filters h4 {
+            color: #155724;
+            margin-bottom: 10px;
+        }
+
+        .filter-tag {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            margin: 3px;
+            font-size: 0.9em;
+        }
+
+        .results {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .error {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .success {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 AmoCRM Фильтры экспорта</h1>
+            <p>Выберите критерии для экспорта данных в Google Sheets</p>
+        </div>
+
+        <div id="loading" class="loading">
+            Загружаю доступные фильтры из AmoCRM...
+        </div>
+
+        <div id="filters-container" style="display: none;">
+            <div class="filters-grid">
+                <!-- Пользовательские поля -->
+                <div class="filter-section">
+                    <h3>🎨 Пользовательские поля</h3>
+                    <div id="custom-fields" class="filter-options">
+                        <!-- Динамически заполняется -->
+                    </div>
+                </div>
+
+                <!-- Воронки -->
+                <div class="filter-section">
+                    <h3>🔀 Воронки</h3>
+                    <div id="pipelines" class="filter-options">
+                        <!-- Динамически заполняется -->
+                    </div>
+                </div>
+
+                <!-- Этапы -->
+                <div class="filter-section">
+                    <h3>📊 Этапы сделок</h3>
+                    <div id="statuses" class="filter-options">
+                        <!-- Динамически заполняется -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="selected-filters" class="selected-filters" style="display: none;">
+                <h4>✅ Выбранные фильтры:</h4>
+                <div id="filter-tags"></div>
+            </div>
+
+            <div class="export-section">
+                <h3>🚀 Запуск экспорта</h3>
+                <p>Нажмите кнопку для экспорта данных с выбранными фильтрами</p>
+                <button id="export-btn" class="export-btn" onclick="startExport()">
+                    Экспортировать данные
+                </button>
+            </div>
+
+            <div id="results" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let filterData = {};
+        let selectedFilters = {
+            customFields: {},
+            pipelines: [],
+            statuses: []
+        };
+
+        // Загрузка данных фильтров
+        async function loadFilterOptions() {
+            try {
+                const response = await fetch('/api/filter-options');
+                const data = await response.json();
+                
+                if (data.success) {
+                    filterData = data.data;
+                    renderFilters();
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('filters-container').style.display = 'block';
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                document.getElementById('loading').innerHTML = 
+                    `❌ Ошибка загрузки: ${error.message}`;
+                console.error('Ошибка загрузки фильтров:', error);
+            }
+        }
+
+        // Отрисовка фильтров
+        function renderFilters() {
+            renderCustomFields();
+            renderPipelines();
+            renderStatuses();
+        }
+
+        // Отрисовка пользовательских полей
+        function renderCustomFields() {
+            const container = document.getElementById('custom-fields');
+            container.innerHTML = '';
+
+            Object.entries(filterData.customFields).forEach(([fieldName, fieldData]) => {
+                if (fieldData.values.length > 0) {
+                    const fieldSection = document.createElement('div');
+                    fieldSection.style.marginBottom = '20px';
+                    fieldSection.style.paddingBottom = '15px';
+                    fieldSection.style.borderBottom = '2px solid #eee';
+
+                    const fieldTitle = document.createElement('h4');
+                    fieldTitle.textContent = fieldName;
+                    fieldTitle.style.color = '#495057';
+                    fieldTitle.style.marginBottom = '10px';
+                    fieldSection.appendChild(fieldTitle);
+
+                    fieldData.values.forEach(value => {
+                        const checkboxItem = document.createElement('div');
+                        checkboxItem.className = 'checkbox-item';
+
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.id = `${fieldName}-${value}`;
+                        checkbox.onchange = () => updateCustomFieldFilter(fieldName, value, checkbox.checked);
+
+                        const label = document.createElement('label');
+                        label.htmlFor = checkbox.id;
+                        label.textContent = value;
+
+                        checkboxItem.appendChild(checkbox);
+                        checkboxItem.appendChild(label);
+                        fieldSection.appendChild(checkboxItem);
+                    });
+
+                    container.appendChild(fieldSection);
+                }
+            });
+        }
+
+        // Отрисовка воронок
+        function renderPipelines() {
+            const container = document.getElementById('pipelines');
+            container.innerHTML = '';
+
+            filterData.pipelines.forEach(pipeline => {
+                const checkboxItem = document.createElement('div');
+                checkboxItem.className = 'checkbox-item';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `pipeline-${pipeline.id}`;
+                checkbox.onchange = () => updatePipelineFilter(pipeline.id, checkbox.checked);
+
+                const label = document.createElement('label');
+                label.htmlFor = checkbox.id;
+                label.innerHTML = `${pipeline.name} <span class="count-badge">${pipeline.statuses.length}</span>`;
+
+                checkboxItem.appendChild(checkbox);
+                checkboxItem.appendChild(label);
+                container.appendChild(checkboxItem);
+            });
+        }
+
+        // Отрисовка этапов
+        function renderStatuses() {
+            const container = document.getElementById('statuses');
+            container.innerHTML = '';
+
+            filterData.pipelines.forEach(pipeline => {
+                pipeline.statuses.forEach(status => {
+                    const checkboxItem = document.createElement('div');
+                    checkboxItem.className = 'checkbox-item';
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `status-${status.id}`;
+                    checkbox.onchange = () => updateStatusFilter(status.id, checkbox.checked);
+
+                    const label = document.createElement('label');
+                    label.htmlFor = checkbox.id;
+                    label.textContent = `${status.name} (${pipeline.name})`;
+
+                    checkboxItem.appendChild(checkbox);
+                    checkboxItem.appendChild(label);
+                    container.appendChild(checkboxItem);
+                });
+            });
+        }
+
+        // Обновление фильтра пользовательских полей
+        function updateCustomFieldFilter(fieldName, value, checked) {
+            if (!selectedFilters.customFields[fieldName]) {
+                selectedFilters.customFields[fieldName] = [];
+            }
+
+            if (checked) {
+                if (!selectedFilters.customFields[fieldName].includes(value)) {
+                    selectedFilters.customFields[fieldName].push(value);
+                }
+            } else {
+                selectedFilters.customFields[fieldName] = 
+                    selectedFilters.customFields[fieldName].filter(v => v !== value);
+                
+                if (selectedFilters.customFields[fieldName].length === 0) {
+                    delete selectedFilters.customFields[fieldName];
+                }
+            }
+
+            updateSelectedFiltersDisplay();
+        }
+
+        // Обновление фильтра воронок
+        function updatePipelineFilter(pipelineId, checked) {
+            if (checked) {
+                if (!selectedFilters.pipelines.includes(pipelineId.toString())) {
+                    selectedFilters.pipelines.push(pipelineId.toString());
+                }
+            } else {
+                selectedFilters.pipelines = selectedFilters.pipelines.filter(id => id !== pipelineId.toString());
+            }
+
+            updateSelectedFiltersDisplay();
+        }
+
+        // Обновление фильтра этапов
+        function updateStatusFilter(statusId, checked) {
+            if (checked) {
+                if (!selectedFilters.statuses.includes(statusId.toString())) {
+                    selectedFilters.statuses.push(statusId.toString());
+                }
+            } else {
+                selectedFilters.statuses = selectedFilters.statuses.filter(id => id !== statusId.toString());
+            }
+
+            updateSelectedFiltersDisplay();
+        }
+
+        // Отображение выбранных фильтров
+        function updateSelectedFiltersDisplay() {
+            const container = document.getElementById('selected-filters');
+            const tagsContainer = document.getElementById('filter-tags');
+            
+            let hasFilters = false;
+            tagsContainer.innerHTML = '';
+
+            // Пользовательские поля
+            Object.entries(selectedFilters.customFields).forEach(([fieldName, values]) => {
+                if (values.length > 0) {
+                    values.forEach(value => {
+                        const tag = document.createElement('span');
+                        tag.className = 'filter-tag';
+                        tag.textContent = `${fieldName}: ${value}`;
+                        tagsContainer.appendChild(tag);
+                        hasFilters = true;
+                    });
+                }
+            });
+
+            // Воронки
+            selectedFilters.pipelines.forEach(pipelineId => {
+                const pipeline = filterData.pipelines.find(p => p.id.toString() === pipelineId);
+                if (pipeline) {
+                    const tag = document.createElement('span');
+                    tag.className = 'filter-tag';
+                    tag.textContent = `Воронка: ${pipeline.name}`;
+                    tagsContainer.appendChild(tag);
+                    hasFilters = true;
+                }
+            });
+
+            // Этапы
+            selectedFilters.statuses.forEach(statusId => {
+                let statusName = 'Неизвестно';
+                filterData.pipelines.forEach(pipeline => {
+                    const status = pipeline.statuses.find(s => s.id.toString() === statusId);
+                    if (status) {
+                        statusName = status.name;
+                    }
+                });
+                
+                const tag = document.createElement('span');
+                tag.className = 'filter-tag';
+                tag.textContent = `Этап: ${statusName}`;
+                tagsContainer.appendChild(tag);
+                hasFilters = true;
+            });
+
+            container.style.display = hasFilters ? 'block' : 'none';
+        }
+
+        // Запуск экспорта
+        async function startExport() {
+            const btn = document.getElementById('export-btn');
+            const results = document.getElementById('results');
+            
+            btn.disabled = true;
+            btn.textContent = 'Экспортирую...';
+            
+            results.style.display = 'block';
+            results.className = 'results';
+            results.innerHTML = '🚀 Запускаю экспорт с выбранными фильтрами...';
+
+            try {
+                const response = await fetch('/export/custom', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ filters: selectedFilters })
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'started') {
+                    results.className = 'results success';
+                    results.innerHTML = `
+                        <h4>✅ Экспорт запущен успешно!</h4>
+                        <p>${data.message}</p>
+                        <p>Проверьте консоль сервера для детальной информации о процессе.</p>
+                        <pre>${JSON.stringify(data.filters, null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error('Неожиданный ответ сервера');
+                }
+            } catch (error) {
+                results.className = 'results error';
+                results.innerHTML = `❌ Ошибка экспорта: ${error.message}`;
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Экспортировать данные';
+        }
+
+        // Загрузка при старте
+        window.onload = loadFilterOptions;
+    </script>
+</body>
+</html>

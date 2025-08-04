@@ -830,12 +830,10 @@
         <section class="actions-section">
             <h2 class="section-title">Управление системой</h2>
             <div class="actions-grid">
-                <button class="action-tile primary" id="export-data-btn">
+                                <button class="action-tile primary" id="export-btn">
                     <div class="tile-icon">
                         <svg viewBox="0 0 24 24">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="7,10 12,15 17,10"/>
-                            <line x1="12" y1="15" x2="12" y2="3"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4M5 11a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2"/>
                         </svg>
                     </div>
                     <div class="tile-content">
@@ -843,6 +841,20 @@
                         <p>ЕВГ СПБ • Все этапы • С 1 апреля 2025</p>
                     </div>
                 </button>
+
+                <button class="action-tile primary" id="custom-filters-btn" onclick="window.open('/filters.html', '_blank')">
+                    <div class="tile-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 2v-4.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                    </div>
+                    <div class="tile-content">
+                        <h3>� НАСТРАИВАЕМЫЕ ФИЛЬТРЫ</h3>
+                        <p>Выберите свои критерии экспорта</p>
+                    </div>
+                </button>
+
+                <button class="action-tile primary" id="full-sync-btn">
 
                 <button class="action-tile primary" id="full-sync-btn">
                     <div class="tile-icon">
